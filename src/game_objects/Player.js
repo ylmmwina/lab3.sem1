@@ -12,8 +12,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.jumpForce = 550;  // Було 500
 
         // Примусовий розмір
-        this.setDisplaySize(40, 60);
-        this.setBodySize(40, 60);
+        this.setDisplaySize(60, 60);
+        this.setBodySize(60, 60);
 
         this.setGravityY(700); // Трохи швидше падіння для динаміки
 

@@ -1,6 +1,7 @@
 // src/scenes/GameOverScene.js
 export class GameOverScene extends Phaser.Scene {
     init(data) {
+        // Отримуємо рахунок, переданий з GameScene
         this.finalScore = data.score || 0;
     }
 
@@ -11,64 +12,69 @@ export class GameOverScene extends Phaser.Scene {
     create() {
         const { width, height } = this.game.config;
 
-        // Темний прозорий фон
+        // Напівпрозорий чорний фон поверх гри
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.8);
 
-        // Текст "GAME OVER"
+        // 1. ЗАГОЛОВОК "GAME OVER"
         this.add.text(width / 2, height / 2 - 100, 'GAME OVER', {
-            fontSize: '64px',
-            fill: '#FF0000',
-            fontStyle: 'bold'
+            fontSize: '48px',
+            fill: '#FF0000', // Червоний
+            fontFamily: '"Press Start 2P", cursive',
+            stroke: '#FFFFFF',
+            strokeThickness: 4
         }).setOrigin(0.5);
 
-        // --- ЛОГІКА HIGH SCORE ---
-        // 1. Отримуємо старий рекорд
+        // 2. ЛОГІКА ЗБЕРЕЖЕННЯ РЕКОРДУ
         let highScore = localStorage.getItem('coin_rush_highscore') || 0;
         let isNewRecord = false;
 
-        // 2. Перевіряємо, чи побили ми його
         if (this.finalScore > highScore) {
             highScore = this.finalScore;
-            localStorage.setItem('coin_rush_highscore', highScore); // Зберігаємо новий
+            localStorage.setItem('coin_rush_highscore', highScore);
             isNewRecord = true;
         }
 
-        // 3. Відображаємо поточний рахунок
-        this.add.text(width / 2, height / 2, `Ваш рахунок: ${this.finalScore}`, {
-            fontSize: '40px',
-            fill: '#FFFFFF'
+        // 3. ВІДОБРАЖЕННЯ ПОТОЧНОГО РАХУНКУ
+        this.add.text(width / 2, height / 2, `РАХУНОК: ${this.finalScore}`, {
+            fontSize: '24px',
+            fill: '#FFFFFF',
+            fontFamily: '"Press Start 2P", cursive'
         }).setOrigin(0.5);
 
-        // 4. Відображаємо рекорд (або вітання)
+        // 4. ВІДОБРАЖЕННЯ СТАТУСУ РЕКОРДУ
         if (isNewRecord) {
             this.add.text(width / 2, height / 2 + 50, `НОВИЙ РЕКОРД! 🏆`, {
-                fontSize: '32px',
+                fontSize: '20px',
                 fill: '#FFD700', // Золотий
-                fontStyle: 'bold'
+                fontFamily: '"Press Start 2P", cursive'
             }).setOrigin(0.5);
         } else {
-            this.add.text(width / 2, height / 2 + 50, `Найкращий: ${highScore}`, {
-                fontSize: '24px',
-                fill: '#AAAAAA'
+            this.add.text(width / 2, height / 2 + 50, `НАЙКРАЩИЙ: ${highScore}`, {
+                fontSize: '16px',
+                fill: '#AAAAAA', // Сірий
+                fontFamily: '"Press Start 2P", cursive'
             }).setOrigin(0.5);
         }
-        // -------------------------
 
-        // Кнопка "Перезапуск"
-        const restartButton = this.add.text(width / 2, height / 2 + 120, 'Спробувати ще раз', {
-            fontSize: '28px',
+        // 5. КНОПКА ПЕРЕЗАПУСКУ
+        const restartButton = this.add.text(width / 2, height / 2 + 120, '> СПРОБУВАТИ ЩЕ <', {
+            fontSize: '20px',
             fill: '#00FF00',
+            fontFamily: '"Press Start 2P", cursive',
             backgroundColor: '#111111',
-            padding: { x: 10, y: 5 }
+            padding: { x: 10, y: 10 }
         })
             .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true }); // Курсор-рука при наведенні
+            .setInteractive({ useHandCursor: true });
 
+        // Ефект при наведенні миші
+        restartButton.on('pointerover', () => restartButton.setStyle({ fill: '#ffff00' }));
+        restartButton.on('pointerout', () => restartButton.setStyle({ fill: '#00ff00' }));
+
+        // Логіка натискання
         restartButton.on('pointerdown', () => {
             this.scene.stop('GameOverScene');
-
-            // Повертаємось до StartScene, щоб побачити оновлений рекорд там теж
-            // (або можна одразу в GameScene, як вам зручніше)
+            // Повертаємось у меню, щоб побачити оновлений рекорд на головній
             this.scene.start('StartScene');
         });
     }

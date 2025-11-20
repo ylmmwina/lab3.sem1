@@ -13,41 +13,71 @@ export class GameScene extends Phaser.Scene {
 
     preload() {
         const assets = AssetsManager.getAssetsMap();
+        // Завантажуємо всі картинки
         this.load.image(assets.player.key, assets.player.path);
         this.load.image(assets.coin.key, assets.coin.path);
         this.load.image(assets.obstacle.key, assets.obstacle.path);
         this.load.image(assets.platform.key, assets.platform.path);
+
+        // НОВЕ: Завантажуємо хмари
+        this.load.image(assets.clouds.key, assets.clouds.path);
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#333333');
+        // Отримуємо розміри екрану гри
+        const { width, height } = this.game.config;
+
+        // 1. ФОН (Колір + Хмари)
+        // Встановлюємо блакитний колір на випадок, якщо картинка має прозорість
+        this.cameras.main.setBackgroundColor('#87CEEB');
         this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 800);
 
-        this.platforms = this.physics.add.staticGroup();
+        // --- СТВОРЕННЯ ХМАРНОГО ФОНУ ---
+        // Створюємо tileSprite, який покриває весь екран
+        this.cloudsBg = this.add.tileSprite(0, 0, width, height, 'clouds_bg');
+
+        // Ставимо точку відліку в лівий верхній кут
+        this.cloudsBg.setOrigin(0, 0);
+
+        // Прив'язуємо до камери (щоб не рухався разом з гравцем, а був як шпалери)
+        this.cloudsBg.setScrollFactor(0);
+
+        // Відправляємо на найдальший задній план (глибина -10)
+        this.cloudsBg.setDepth(-10);
+        // -------------------------------
+
+        // 2. Групи об'єктів
+        this.platforms = this.add.group();
         this.coins = this.add.group();
         this.obstacles = this.add.group();
 
+        // 3. Гравець
         this.player = new Player(this, 100, 200);
+        // Гравець має бути поверх усього (глибина 10)
+        this.player.setDepth(10);
 
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         this.cameras.main.setFollowOffset(-200, 0);
 
+        // 4. Інтерфейс (Рахунок)
         this.scoreboard = new Scoreboard(this);
+        // Рахунок ще вище (глибина 20)
+        this.scoreboard.scoreText.setDepth(20);
 
+        // 5. Керування
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys('W,A,S,D');
 
+        // 6. Генерація світу
         this.nextSpawnX = 0;
-
-        // Перша платформа
         this.spawnPlatform(400, 1200);
         this.nextSpawnX += 1200;
 
-        // Генеруємо світ наперед
         for(let i = 0; i < 5; i++) {
             this.generateChunk();
         }
 
+        // 7. Колізії
         this.physics.add.collider(this.player, this.platforms);
         this.physics.add.overlap(this.player, this.coins.getChildren(), this.handleCoinCollection, null, this);
         this.physics.add.overlap(this.player, this.obstacles.getChildren(), this.handleObstacleCollision, null, this);
@@ -56,19 +86,19 @@ export class GameScene extends Phaser.Scene {
     generateChunk() {
         const chunkWidth = Phaser.Math.Between(600, 1000);
         const gap = Phaser.Math.Between(0, 50);
-
         const platformX = this.nextSpawnX + gap + (chunkWidth / 2);
-
         this.spawnPlatform(platformX, chunkWidth);
         this.spawnObjects(this.nextSpawnX + gap, chunkWidth);
-
         this.nextSpawnX += chunkWidth + gap;
     }
 
     spawnPlatform(x, width) {
-        const platform = this.platforms.create(x, 600, 'platform_sprite');
-        platform.setDisplaySize(width, 32);
-        platform.refreshBody();
+        // Використовуємо tileSprite для платформи, щоб текстура повторювалась
+        const platform = this.add.tileSprite(x, 600, width, 32, 'platform_sprite');
+        this.physics.add.existing(platform, true);
+        // Платформи на глибині 1 (перед фоном, за гравцем)
+        platform.setDepth(1);
+        this.platforms.add(platform);
     }
 
     spawnObjects(startX, width) {
@@ -80,22 +110,22 @@ export class GameScene extends Phaser.Scene {
             const chance = Phaser.Math.Between(0, 100);
 
             if (chance < 25) {
-                // Монетки
                 const randomY = Phaser.Math.Between(450, 550);
                 const coin = new Coin(this, spawnX, randomY);
                 this.coins.add(coin);
                 coin.setTint(0xffffff);
                 coin.setDisplaySize(32, 32);
+                // Монетки на глибині 2
+                coin.setDepth(2);
             }
             else if (chance > 90) {
                 if (i < steps - 1) {
-                    // ПЕРЕШКОДИ (БОЧКИ)
-                    // ВИПРАВЛЕННЯ: Опустили з 564 до 580.
-                    // Тепер бочка буде стояти щільно на землі.
                     const obstacle = new Obstacle(this, spawnX, 580);
                     this.obstacles.add(obstacle);
                     obstacle.setTint(0xffffff);
                     obstacle.setDisplaySize(40, 40);
+                    // Перешкоди на глибині 2
+                    obstacle.setDepth(2);
                 }
             }
         }
@@ -112,6 +142,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     update() {
+        // --- РУХ ХМАР ---
+        // Прокручуємо текстуру фону. 0.5 - це швидкість.
+        // Можеш збільшити, якщо хочеш швидші хмари.
+        this.cloudsBg.tilePositionX += 0.5;
+        // -----------------
+
         const isLeft = this.cursors.left.isDown || this.keys.A.isDown;
         const isRight = this.cursors.right.isDown || this.keys.D.isDown;
         const isJump = this.cursors.up.isDown || this.keys.W.isDown || this.cursors.space.isDown;
@@ -133,6 +169,7 @@ export class GameScene extends Phaser.Scene {
         if (this.player.x > this.nextSpawnX - 800) {
             this.generateChunk();
 
+            this.physics.add.collider(this.player, this.platforms);
             this.physics.add.overlap(this.player, this.coins.getChildren(), this.handleCoinCollection, null, this);
             this.physics.add.overlap(this.player, this.obstacles.getChildren(), this.handleObstacleCollision, null, this);
         }
