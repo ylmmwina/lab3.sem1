@@ -1,31 +1,30 @@
 // src/game_objects/Coin.js
-// Конкретний ООП-клас "Монетка". Наслідує від Collectable.
+import { AssetsManager } from './AssetsManager.js';
 
-import { Collectable } from './Collectable.js';
-
-export class Coin extends Collectable {
-    /**
-     * Конструктор монетки.
-     */
+export class Coin extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y) {
-        // Викликаємо конструктор батьківського класу Collectable
-        super(scene, x, y, 'coin_sprite');
+        const textureKey = AssetsManager.getAssetsMap().coin.key;
+        super(scene, x, y, textureKey);
 
-        this.scoreValue = 10;
-        this.setScale(0.7); // Трохи зменшимо розмір
+        scene.add.existing(this);
+        scene.physics.add.existing(this);
+
+        this.setCollideWorldBounds(true);
+        this.setBounce(0.5);
+        this.body.allowGravity = true;
     }
 
     /**
      * interact(): Перевизначення (поліморфізм) батьківського методу.
-     * Додає очки гравцю (логіка буде додана пізніше).
-     * @param {Player} player - Екземпляр нашого класу Player.
+     * Викликається при контакті з гравцем.
+     * @param {Player} player - Екземпляр нашого класу Player (тут не використовується).
      */
     interact(player) {
-        // Логіка додавання очок (поки що лише консоль)
-
-        // Викликаємо батьківську логіку (зникнення об'єкта)
-        super.interact(player);
-
-        console.log(`Coin: Додано ${this.scoreValue} очок!`);
+        // --- ЦІ ТРИ РЯДКИ НЕОБХІДНІ ДЛЯ ПРОХОДЖЕННЯ ТЕСТУ ---
+        // Вони "вимикають" монетку у світі гри.
+        this.setActive(false);
+        this.setVisible(false);
+        this.body.enable = false;
+        // ----------------------------------------------------
     }
 }
