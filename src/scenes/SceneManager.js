@@ -1,37 +1,37 @@
 // src/scenes/SceneManager.js
-// Клас для централізованого керування сценами гри (Фасад).
-
+import { StartScene } from './StartScene.js'; // <-- Додали імпорт
 import { GameScene } from './GameScene.js';
-import { UIScene } from './UIScene.js'; // <-- НОВИЙ ІМПОРТ
-import { GameOverScene } from './GameOverScene.js'; // <-- НОВИЙ ІМПОРТ
+import { UIScene } from './UIScene.js';
+import { GameOverScene } from './GameOverScene.js';
 
-/**
- * SceneManager (Фасад) ініціалізує всі сцени, які нам потрібні.
- */
 export class SceneManager {
-    /**
-     * Запускає необхідні сцени.
-     */
     static startScenes(game) {
-        // Додаємо всі сцени
+        // Додаємо всі сцени в гру
+        game.scene.add('StartScene', StartScene);
         game.scene.add('GameScene', GameScene);
         game.scene.add('UIScene', UIScene);
         game.scene.add('GameOverScene', GameOverScene);
 
-        // Запускаємо GameScene (головна гра) та UIScene (інтерфейс) одночасно
-        game.scene.start('GameScene');
-        game.scene.start('UIScene');
-
-        console.log("SceneManager: GameScene та UIScene запущені паралельно.");
+        // ЗАПУСКАЄМО ТІЛЬКИ СТАРТОВУ СЦЕНУ
+        game.scene.start('StartScene');
+        console.log("SceneManager: Запущено StartScene.");
     }
 
-    // Метод для переходу до кінцевої сцени
-    static gameOver(scene, score) {
-        // Зупиняємо сцену UI та Game
-        scene.scene.stop('UIScene');
-        scene.scene.stop('GameScene');
+    // Метод переходу з меню в гру
+    static startGame(scene) {
+        scene.scene.stop('StartScene');
+        scene.scene.stop('GameOverScene'); // На випадок перезапуску
 
-        // Запускаємо сцену "Game Over", передаючи фінальний рахунок
+        scene.scene.start('GameScene');
+        scene.scene.start('UIScene');
+    }
+
+    // Метод переходу в Game Over
+    static gameOver(scene, score) {
+        scene.scene.stop('UIScene');
+        scene.scene.pause('GameScene'); // Пауза замість стоп, щоб видно було, де програв
+
+        // Запускаємо Game Over поверх гри
         scene.scene.start('GameOverScene', { score: score });
     }
 }

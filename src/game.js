@@ -1,19 +1,15 @@
 // src/game.js
-// Точка входу: конфігурація та ініціалізація гри.
-
-// Імпортуємо SceneManager, який керуватиме сценами
 import { SceneManager } from './scenes/SceneManager.js';
 
-/**
- * Конфігурація гри Phaser.
- */
 const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    parent: document.body, // Важливо: додаємо канвас прямо в body, де працює flex
+    backgroundColor: '#000000', // Чорний фон, поки нічого не завантажилось
     scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        mode: Phaser.Scale.FIT, // Масштабування під розмір вікна
+        autoCenter: Phaser.Scale.CENTER_BOTH // Центрування силами Phaser
     },
     physics: {
         default: 'arcade',
@@ -25,12 +21,8 @@ const config = {
     render: {
         pixelArt: true
     },
-    // Тут ми більше не реєструємо сцени, це зробить SceneManager!
-    scene: []
+    scene: [] // Сцени додаються через SceneManager
 };
 
-// Ініціалізація об'єкта гри
 const game = new Phaser.Game(config);
-
-// Запускаємо сцени через наш ООП-менеджер
 SceneManager.startScenes(game);
