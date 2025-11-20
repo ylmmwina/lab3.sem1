@@ -1,0 +1,22 @@
+/* style.css */
+
+body {
+    margin: 0;
+    /* Центрування гри на екрані */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #333;
+    /* Запобігання виділенню тексту на веб-сторінці */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Стиль для елемента canvas, де відображається гра */
+canvas {
+    display: block; /* Уникаємо зайвих відступів під Canvas */
+    border: 4px solid #444; /* Додаємо рамку для естетики */
+}
