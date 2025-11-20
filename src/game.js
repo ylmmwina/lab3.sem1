@@ -1,8 +1,8 @@
 // src/game.js
 // Точка входу: конфігурація та ініціалізація гри.
 
-// Імпортуємо головну сцену як окремий модуль.
-import { GameScene } from './scenes/GameScene.js';
+// Імпортуємо SceneManager, який керуватиме сценами
+import { SceneManager } from './scenes/SceneManager.js';
 
 /**
  * Конфігурація гри Phaser.
@@ -11,12 +11,10 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    // Встановлюємо масштабування для чіткої піксельної графіки
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    // Вмикаємо 2D-фізику Arcade
     physics: {
         default: 'arcade',
         arcade: {
@@ -27,9 +25,12 @@ const config = {
     render: {
         pixelArt: true
     },
-    // Реєструємо сцени
-    scene: [GameScene]
+    // Тут ми більше не реєструємо сцени, це зробить SceneManager!
+    scene: []
 };
 
 // Ініціалізація об'єкта гри
 const game = new Phaser.Game(config);
+
+// Запускаємо сцени через наш ООП-менеджер
+SceneManager.startScenes(game);
