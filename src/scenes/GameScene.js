@@ -20,58 +20,85 @@ export class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // 1. UI та Фон
-        this.cameras.main.setBackgroundColor('#333333'); // Сірий фон всередині гри
+        this.cameras.main.setBackgroundColor('#333333');
+        this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 800);
+
+        this.platforms = this.physics.add.staticGroup();
+        this.coins = this.add.group();
+        this.obstacles = this.add.group();
+
+        this.player = new Player(this, 100, 200);
+
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+        this.cameras.main.setFollowOffset(-200, 0);
+
         this.scoreboard = new Scoreboard(this);
 
-        // 2. Платформа
-        this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(400, 584, 'platform_sprite')
-            .setTint(0xffffff)
-            .setDisplaySize(800, 32)
-            .refreshBody();
-
-        // 3. Гравець
-        this.player = new Player(this, 100, 450);
-        this.player.setTexture('player_sprite');
-        this.player.setDisplaySize(32, 64);
-        this.player.setTint(0xffffff);
-
-        // 4. Керування
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys('W,A,S,D');
 
-        // 5. Монетки
-        // ВИПРАВЛЕННЯ: Використовуємо this.add.group() замість this.physics.add.group()
-        // Це запобігає перезапису налаштувань гравітації (щоб монети не падали)
-        this.coins = this.add.group();
-        this.coins.add(new Coin(this, 300, 450));
-        this.coins.add(new Coin(this, 450, 400));
-        this.coins.add(new Coin(this, 600, 450));
+        this.nextSpawnX = 0;
 
-        // Налаштування вигляду для всіх монет
-        this.coins.children.entries.forEach(coin => {
-            coin.setTexture('coin_sprite');
-            coin.setTint(0xffffff);
-            coin.setDisplaySize(32, 32);
-        });
+        // Перша платформа
+        this.spawnPlatform(400, 1200);
+        this.nextSpawnX += 1200;
 
-        // 6. Перешкоди
-        // ВИПРАВЛЕННЯ: Теж звичайна група
-        this.obstacles = this.add.group();
-        this.obstacles.add(new Obstacle(this, 500, 545)); // Y підібрано, щоб стояв на землі
+        // Генеруємо світ наперед
+        for(let i = 0; i < 5; i++) {
+            this.generateChunk();
+        }
 
-        this.obstacles.children.entries.forEach(obs => {
-            obs.setTexture('obstacle_sprite');
-            obs.setTint(0xffffff);
-            obs.setDisplaySize(32, 48);
-        });
-
-        // 7. Колізії
         this.physics.add.collider(this.player, this.platforms);
-
-        // Оскільки групи тепер не фізичні, ми передаємо масив їхніх дітей у overlap
         this.physics.add.overlap(this.player, this.coins.getChildren(), this.handleCoinCollection, null, this);
         this.physics.add.overlap(this.player, this.obstacles.getChildren(), this.handleObstacleCollision, null, this);
+    }
+
+    generateChunk() {
+        const chunkWidth = Phaser.Math.Between(600, 1000);
+        const gap = Phaser.Math.Between(0, 50);
+
+        const platformX = this.nextSpawnX + gap + (chunkWidth / 2);
+
+        this.spawnPlatform(platformX, chunkWidth);
+        this.spawnObjects(this.nextSpawnX + gap, chunkWidth);
+
+        this.nextSpawnX += chunkWidth + gap;
+    }
+
+    spawnPlatform(x, width) {
+        const platform = this.platforms.create(x, 600, 'platform_sprite');
+        platform.setDisplaySize(width, 32);
+        platform.refreshBody();
+    }
+
+    spawnObjects(startX, width) {
+        const steps = Math.floor(width / 100);
+        const actualStartX = startX;
+
+        for (let i = 1; i < steps; i++) {
+            const spawnX = actualStartX + (i * 100);
+            const chance = Phaser.Math.Between(0, 100);
+
+            if (chance < 25) {
+                // Монетки
+                const randomY = Phaser.Math.Between(450, 550);
+                const coin = new Coin(this, spawnX, randomY);
+                this.coins.add(coin);
+                coin.setTint(0xffffff);
+                coin.setDisplaySize(32, 32);
+            }
+            else if (chance > 90) {
+                if (i < steps - 1) {
+                    // ПЕРЕШКОДИ (БОЧКИ)
+                    // ВИПРАВЛЕННЯ: Опустили з 564 до 580.
+                    // Тепер бочка буде стояти щільно на землі.
+                    const obstacle = new Obstacle(this, spawnX, 580);
+                    this.obstacles.add(obstacle);
+                    obstacle.setTint(0xffffff);
+                    obstacle.setDisplaySize(40, 40);
+                }
+            }
+        }
     }
 
     handleCoinCollection(player, coin) {
@@ -85,18 +112,45 @@ export class GameScene extends Phaser.Scene {
     }
 
     update() {
-        if (this.cursors.left.isDown) {
+        const isLeft = this.cursors.left.isDown || this.keys.A.isDown;
+        const isRight = this.cursors.right.isDown || this.keys.D.isDown;
+        const isJump = this.cursors.up.isDown || this.keys.W.isDown || this.cursors.space.isDown;
+
+        if (isLeft) {
             this.player.move(-1);
             this.player.setFlipX(true);
-        } else if (this.cursors.right.isDown) {
+        } else if (isRight) {
             this.player.move(1);
             this.player.setFlipX(false);
         } else {
             this.player.move(0);
         }
 
-        if (this.cursors.up.isDown) {
+        if (isJump) {
             this.player.jump();
+        }
+
+        if (this.player.x > this.nextSpawnX - 800) {
+            this.generateChunk();
+
+            this.physics.add.overlap(this.player, this.coins.getChildren(), this.handleCoinCollection, null, this);
+            this.physics.add.overlap(this.player, this.obstacles.getChildren(), this.handleObstacleCollision, null, this);
+        }
+
+        const deleteThreshold = this.player.x - 1000;
+
+        this.platforms.children.each(plat => {
+            if (plat.x + plat.width < deleteThreshold) plat.destroy();
+        });
+        this.coins.children.each(c => {
+            if (c.x < deleteThreshold) c.destroy();
+        });
+        this.obstacles.children.each(o => {
+            if (o.x < deleteThreshold) o.destroy();
+        });
+
+        if (this.player.y > 800) {
+            SceneManager.gameOver(this, this.scoreboard.getScore());
         }
     }
 }

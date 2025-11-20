@@ -1,42 +1,31 @@
 // src/game_objects/Player.js
-// ООП-клас, що інкапсулює логіку гравця (рух, стрибок).
-
-/**
- * Клас Player, наслідує від Phaser.Physics.Arcade.Sprite.
- */
 export class Player extends Phaser.Physics.Arcade.Sprite {
-    /**
-     * Конструктор гравця.
-     */
+
     constructor(scene, x, y) {
         super(scene, x, y, 'player_sprite');
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        this.moveSpeed = 200;
-        this.jumpForce = 400;
+        // ЗБІЛЬШЕНО: Швидкість і сила стрибка
+        this.moveSpeed = 300;  // Було 250
+        this.jumpForce = 550;  // Було 500
 
-        // Встановлюємо розмір фізичного тіла, щоб воно відповідало спрайту (32x32)
-        this.setBodySize(32, 32);
+        // Примусовий розмір
+        this.setDisplaySize(40, 60);
+        this.setBodySize(40, 60);
 
-        // Встановлення фізичних властивостей
-        this.setCollideWorldBounds(true);
-        this.setDragX(500);
+        this.setGravityY(700); // Трохи швидше падіння для динаміки
+
+        this.setCollideWorldBounds(false);
     }
 
-    /**
-     * move(): Метод для горизонтального руху.
-     */
     move(direction) {
         this.setVelocityX(direction * this.moveSpeed);
     }
 
-    /**
-     * jump(): Метод для стрибка.
-     */
     jump() {
-        if (this.body.touching.down) {
+        if (this.body.blocked.down || this.body.touching.down) {
             this.setVelocityY(-this.jumpForce);
         }
     }
