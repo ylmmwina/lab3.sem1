@@ -9,20 +9,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
      * Конструктор гравця.
      */
     constructor(scene, x, y) {
-        super(scene, x, y, 'placeholder');
+        super(scene, x, y, 'player_sprite');
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        // Інкапсульовані властивості
         this.moveSpeed = 200;
         this.jumpForce = 400;
 
-        // Фізичні властивості
+        // Встановлюємо розмір фізичного тіла, щоб воно відповідало спрайту (32x32)
+        this.setBodySize(32, 32);
+
+        // Встановлення фізичних властивостей
         this.setCollideWorldBounds(true);
         this.setDragX(500);
-
-        console.log("Player: Об'єкт успішно ініціалізовано.");
     }
 
     /**
@@ -36,7 +36,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
      * jump(): Метод для стрибка.
      */
     jump() {
-        // Викликаємо стрибок, якщо гравець торкається землі.
         if (this.body.touching.down) {
             this.setVelocityY(-this.jumpForce);
         }

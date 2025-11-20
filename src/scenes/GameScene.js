@@ -6,7 +6,7 @@ import { Coin } from '../game_objects/Coin.js';
 import { Obstacle } from '../game_objects/Obstacle.js';
 import { Scoreboard } from '../game_objects/Scoreboard.js';
 import { AssetsManager } from '../game_objects/AssetsManager.js';
-import { SceneManager } from './SceneManager.js'; // <-- НОВИЙ ІМПОРТ
+import { SceneManager } from './SceneManager.js';
 
 /**
  * GameScene успадковує функціональність від Phaser.Scene.
@@ -27,18 +27,13 @@ export class GameScene extends Phaser.Scene {
 
         const assets = AssetsManager.getAssetsMap();
 
+        // Завантаження ваших піксельних зображень
         this.load.image(assets.player.key, assets.player.path);
         this.load.image(assets.coin.key, assets.coin.path);
         this.load.image(assets.obstacle.key, assets.obstacle.path);
         this.load.image(assets.platform.key, assets.platform.path);
 
-        // Тимчасово створюємо плейсхолдери, якщо файли ще не намальовані
-        if (!this.textures.exists('player_sprite')) {
-            this.textures.create('player_sprite', [0, 0, 0, 0], 1, 1);
-            this.textures.create('coin_sprite', [0, 0, 0, 0], 1, 1);
-            this.textures.create('obstacle_sprite', [0, 0, 0, 0], 1, 1);
-            this.textures.create('platform_sprite', [0, 0, 0, 0], 1, 1);
-        }
+        // !!! Тимчасові плейсхолдери ВИДАЛЕНО, оскільки ви надали власні спрайти!
     }
 
     create() {
@@ -46,13 +41,12 @@ export class GameScene extends Phaser.Scene {
 
         // 1. Створення Scoreboard
         this.scoreboard = new Scoreboard(this);
-        // Прибираємо старий текст, бо UI-текст тепер у Scoreboard/UIScene
 
-        // 2. Створення об'єкта Player
+        // 2. Створення об'єкта Player. Тепер Phaser автоматично використовує player.png
         this.player = new Player(this, 100, 450);
         this.player.setTexture('player_sprite');
         this.player.setDisplaySize(32, 32);
-        this.player.setTint(0xff0000);
+        this.player.setTint(0xffffff); // Скидаємо tint, щоб бачити оригінальні кольори спрайту
 
         // 3. Налаштування керування
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -60,7 +54,7 @@ export class GameScene extends Phaser.Scene {
         // 4. Створення платформи
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(400, 584, 'platform_sprite')
-            .setTint(0x00ff00)
+            .setTint(0xffffff) // Скидаємо tint
             .setDisplaySize(800, 32)
             .refreshBody();
 
@@ -72,7 +66,7 @@ export class GameScene extends Phaser.Scene {
 
         this.coins.children.entries.forEach(coin => {
             coin.setTexture('coin_sprite');
-            coin.setTint(0xffd700);
+            coin.setTint(0xffffff); // Скидаємо tint
             coin.setDisplaySize(24, 24);
         });
 
@@ -82,7 +76,8 @@ export class GameScene extends Phaser.Scene {
 
         this.obstacles.children.entries.forEach(obs => {
             obs.setTexture('obstacle_sprite');
-            obs.setTint(0x0000ff);
+            obs.setTint(0xffffff); // Скидаємо tint
+            obs.setDisplaySize(48, 48); // Трохи збільшимо розмір бочки
         });
 
         // 7. Налаштування Колізій та Взаємодій
@@ -91,29 +86,24 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.obstacles, this.handleObstacleCollision, null, this);
     }
 
-    // ... (handleCoinCollection залишається без змін)
     handleCoinCollection(player, coin) {
         coin.interact(player);
         this.scoreboard.addScore(coin.scoreValue);
     }
 
-    /**
-     * handleObstacleCollision: Обробник зіткнення з перешкодою.
-     * Викликає перехід до сцени "Game Over".
-     */
     handleObstacleCollision(player, obstacle) {
         obstacle.interact(player);
-
-        // Використовуємо SceneManager для переходу між сценами
         SceneManager.gameOver(this, this.scoreboard.getScore());
     }
 
     update(time, delta) {
-        // ... (код керування Player залишається без змін)
+        // Логіка керування Player
         if (this.cursors.left.isDown) {
             this.player.move(-1);
+            this.player.setFlipX(true); // Віддзеркалення спрайту
         } else if (this.cursors.right.isDown) {
             this.player.move(1);
+            this.player.setFlipX(false); // Нормальний вигляд
         } else {
             this.player.move(0);
         }
