@@ -1,0 +1,16 @@
+# СЕРВІСНІ ФАЙЛИ IDE (WebStorm, IntelliJ IDEA)
+.idea/
+*.iml
+
+# ТИМЧАСОВІ/СИСТЕМНІ ФАЙЛИ
+# macOS
+.DS_Store
+
+# ЛОГИ/КЕШ
+npm-debug.log
+yarn-error.log
+/node_modules
+
+# ФАЙЛИ ЗБІРКИ (на майбутнє)
+/build
+/dist
