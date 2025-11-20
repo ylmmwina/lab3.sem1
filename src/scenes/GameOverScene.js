@@ -1,11 +1,5 @@
 // src/scenes/GameOverScene.js
-// Сцена, що відображається після програшу.
-
 export class GameOverScene extends Phaser.Scene {
-    /**
-     * Дані передаються в init() при запуску сцени.
-     * @param {object} data - Об'єкт, що містить фінальний рахунок.
-     */
     init(data) {
         this.finalScore = data.score || 0;
     }
@@ -15,40 +9,67 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("GameOverScene: Кінець гри.");
-
         const { width, height } = this.game.config;
 
-        // Задній фон
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7);
+        // Темний прозорий фон
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.8);
 
         // Текст "GAME OVER"
-        this.add.text(width / 2, height / 2 - 80, 'GAME OVER', {
+        this.add.text(width / 2, height / 2 - 100, 'GAME OVER', {
             fontSize: '64px',
             fill: '#FF0000',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        // Фінальний рахунок
+        // --- ЛОГІКА HIGH SCORE ---
+        // 1. Отримуємо старий рекорд
+        let highScore = localStorage.getItem('coin_rush_highscore') || 0;
+        let isNewRecord = false;
+
+        // 2. Перевіряємо, чи побили ми його
+        if (this.finalScore > highScore) {
+            highScore = this.finalScore;
+            localStorage.setItem('coin_rush_highscore', highScore); // Зберігаємо новий
+            isNewRecord = true;
+        }
+
+        // 3. Відображаємо поточний рахунок
         this.add.text(width / 2, height / 2, `Ваш рахунок: ${this.finalScore}`, {
-            fontSize: '32px',
+            fontSize: '40px',
             fill: '#FFFFFF'
         }).setOrigin(0.5);
 
+        // 4. Відображаємо рекорд (або вітання)
+        if (isNewRecord) {
+            this.add.text(width / 2, height / 2 + 50, `НОВИЙ РЕКОРД! 🏆`, {
+                fontSize: '32px',
+                fill: '#FFD700', // Золотий
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
+        } else {
+            this.add.text(width / 2, height / 2 + 50, `Найкращий: ${highScore}`, {
+                fontSize: '24px',
+                fill: '#AAAAAA'
+            }).setOrigin(0.5);
+        }
+        // -------------------------
+
         // Кнопка "Перезапуск"
-        const restartButton = this.add.text(width / 2, height / 2 + 80, 'Спробувати ще раз', {
-            fontSize: '32px',
+        const restartButton = this.add.text(width / 2, height / 2 + 120, 'Спробувати ще раз', {
+            fontSize: '28px',
             fill: '#00FF00',
-            backgroundColor: '#111111'
+            backgroundColor: '#111111',
+            padding: { x: 10, y: 5 }
         })
             .setOrigin(0.5)
-            .setInteractive();
+            .setInteractive({ useHandCursor: true }); // Курсор-рука при наведенні
 
-        // Логіка перезапуску
         restartButton.on('pointerdown', () => {
-            // Зупиняємо цю сцену та перезапускаємо GameScene
             this.scene.stop('GameOverScene');
-            this.scene.start('GameScene');
+
+            // Повертаємось до StartScene, щоб побачити оновлений рекорд там теж
+            // (або можна одразу в GameScene, як вам зручніше)
+            this.scene.start('StartScene');
         });
     }
 }

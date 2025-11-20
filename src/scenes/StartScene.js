@@ -9,23 +9,32 @@ export class StartScene extends Phaser.Scene {
     create() {
         const { width, height } = this.game.config;
 
-        // Темний фон
         this.cameras.main.setBackgroundColor('#000000');
 
         // Заголовок
-        this.add.text(width / 2, height / 2 - 50, 'COIN RUSH', {
+        this.add.text(width / 2, height / 2 - 80, 'COIN RUSH', {
             fontSize: '64px',
             fill: '#FFD700',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
+        // --- ЛОГІКА HIGH SCORE ---
+        // Отримуємо збережений рекорд з пам'яті браузера (або 0, якщо його немає)
+        const highScore = localStorage.getItem('coin_rush_highscore') || 0;
+
+        this.add.text(width / 2, height / 2, `РЕКОРД: ${highScore}`, {
+            fontSize: '32px',
+            fill: '#00FF00' // Зелений колір
+        }).setOrigin(0.5);
+        // -------------------------
+
         // Інструкція
-        const startText = this.add.text(width / 2, height / 2 + 50, 'Натисніть, щоб почати', {
+        const startText = this.add.text(width / 2, height / 2 + 80, 'Натисніть, щоб почати', {
             fontSize: '24px',
             fill: '#FFFFFF'
         }).setOrigin(0.5);
 
-        // Анімація миготіння тексту
+        // Анімація
         this.tweens.add({
             targets: startText,
             alpha: 0,
@@ -34,12 +43,11 @@ export class StartScene extends Phaser.Scene {
             repeat: -1
         });
 
-        // Обробка кліку/натискання для старту
+        // Старт
         this.input.on('pointerdown', () => {
             SceneManager.startGame(this);
         });
 
-        // Стартуємо також на пробіл
         this.input.keyboard.on('keydown-SPACE', () => {
             SceneManager.startGame(this);
         });
